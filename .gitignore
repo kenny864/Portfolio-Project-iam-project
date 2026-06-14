@@ -1,0 +1,15 @@
+# Local .terraform directory
+.terraform/
+
+# Terraform state files (these contain sensitive secrets)
+*.tfstate
+*.tfstate.*
+
+# Crash logs and sensitive variable files
+crash.log
+*.tfvars
+*.tfvars.json
+
+# Local overrides
+override.tf
+override.tf.json
