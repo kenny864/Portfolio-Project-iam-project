@@ -56,6 +56,28 @@ resource "aws_iam_policy" "enforce_mfa_policy" {
     })
 }
 
+resource "aws_iam_policy" "cost_explorer_access_policy" {
+    name = "Cost-Explorer-Access-Policy"
+    path = "/"
+    description = "Grants users permissions to view, create, update, and delete using the Cost Explorer reports page."
+    policy = jsonencode({
+        "Version":"2012-10-17",
+        "Statement": [
+            {
+                "Sid": "VisualEditor0",
+                "Effect": "Allow",
+                "Action": [
+                    "aws-portal:ViewBilling",
+                    "ce:CreateReport",
+                    "ce:UpdateReport",
+                    "ce:DeleteReport"
+                ],
+                "Resource": "*"
+            }
+        ]
+    })
+}
+
 # local variables
 locals {
     # Developers group policy list
@@ -63,6 +85,28 @@ locals {
         "arn:aws:iam::aws:policy/AmazonEC2FullAccess",
         "arn:aws:iam::aws:policy/AmazonS3FullAccess",
         aws_iam_policy.enforce_mfa_policy.arn
+    ]
+
+
+    # Operators group policy list
+    operators_policy_list = [
+        "arn:aws:iam::aws:policy/AmazonEC2FullAccess",
+        "arn:aws:iam::aws:policy/AWSSystemsManagerForSAPFullAccess",
+        "arn:aws:iam::aws:policy/AmazonRDSFullAccess",
+        aws_iam_group.enforce_mfa_policy.arn
+    ]
+
+    # Finance group policy list
+    finance_policy_list = [
+        "arn:aws:iam::aws:policy/AWSBudgetsActionsWithAWSResourceControlAccess",
+        aws_iam_group.enforce_mfa_policy.arn
+    ]
+
+    # Analysts group policy list
+    analysts_policy_list = [
+        "arn:aws:iam::aws:policy/AmazonS3FullAccess",
+        "arn:aws:iam::aws:policy/AmazonRDSReadOnlyAccess",
+        aws_iam_group.enforce_mfa_policy.arn
     ]
 }
 
