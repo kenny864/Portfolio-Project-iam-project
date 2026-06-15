@@ -55,3 +55,26 @@ resource "aws_iam_policy" "enforce_mfa_policy" {
         ]
     })
 }
+
+# local variables
+locals {
+    # Developers group policy list
+    developers_policy_list = [
+        "arn:aws:iam::aws:policy/AmazonEC2FullAccess",
+        "arn:aws:iam::aws:policy/AmazonS3FullAccess",
+        aws_iam_policy.enforce_mfa_policy.arn
+    ]
+}
+
+# Create Developer User Group
+resource "aws_iam_group" "developers" {
+    name = "Developer"
+    path = "/"
+}
+
+# Attaching developers policy list to Developer group
+resource "aws_iam_group_policy_attachment" "developers_policies" {
+    for_each = toset(local.developers_policy_list)
+    group = aws_iam_group.developers.name
+    policy_arn = each.value
+}
