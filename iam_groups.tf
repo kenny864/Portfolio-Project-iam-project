@@ -1,4 +1,4 @@
-# Creating the Managed IAM Policy
+# Creating IAM Policy to enforce mfa
 resource "aws_iam_policy" "enforce_mfa_policy" {
     name = "Enforce-MFA-Policy"
     path = "/"
@@ -56,6 +56,7 @@ resource "aws_iam_policy" "enforce_mfa_policy" {
     })
 }
 
+# Creating iam policy to grant cost explorer access
 resource "aws_iam_policy" "cost_explorer_access_policy" {
     name = "Cost-Explorer-Access-Policy"
     path = "/"
@@ -78,87 +79,69 @@ resource "aws_iam_policy" "cost_explorer_access_policy" {
     })
 }
 
-# local variables
-locals {
-    # Developers group policy list
-    developers_policy_list = [
-        "arn:aws:iam::aws:policy/AmazonEC2FullAccess",
-        "arn:aws:iam::aws:policy/AmazonS3FullAccess",
-        aws_iam_policy.enforce_mfa_policy.arn
-    ]
+# Define local variables
+locals  {
+    # Map of IAM groups and their associated managed policy ARNs
+    iam_groups = {
+        developers = {
+            path = "/teams/"
+            policy_arn = [
+                "arn:aws:iam::aws:policy/AmazonEC2FullAccess",
+                "arn:aws:iam::aws:policy/AmazonS3FullAccess",
+                aws_iam_policy.enforce_mfa_policy.arn
+            ]
+        }
+        operations = {
+            path = "/teams/"
+            policy_arn = [
+                "arn:aws:iam::aws:policy/AmazonEC2FullAccess",
+                "arn:aws:iam::aws:policy/AWSSystemsManagerForSAPFullAccess",
+                "arn:aws:iam::aws:policy/AmazonRDSFullAccess",
+                aws_iam_policy.enforce_mfa_policy.arn
+            ]
+        }
+        finance = {
+            path = "/teams/"
+            policy_arn = [
+                "arn:aws:iam::aws:policy/AWSBudgetsActionsWithAWSResourceControlAccess",
+                aws_iam_policy.cost_explorer_access_policy.arn,
+                aws_iam_policy.enforce_mfa_policy.arn
+            ]
+        }
+        analysts = {
+            path = "/teams/"
+            policy_arn = [
+                "arn:aws:iam::aws:policy/AmazonS3FullAccess",
+                "arn:aws:iam::aws:policy/AmazonRDSReadOnlyAccess",
+                aws_iam_policy.enforce_mfa_policy.arn
+            ]
+        }
+    }
 
-
-    # Operations group policy list
-    operations_policy_list = [
-        "arn:aws:iam::aws:policy/AmazonEC2FullAccess",
-        "arn:aws:iam::aws:policy/AWSSystemsManagerForSAPFullAccess",
-        "arn:aws:iam::aws:policy/AmazonRDSFullAccess",
-        aws_iam_group.enforce_mfa_policy.arn
-    ]
-
-    # Finance group policy list
-    finance_policy_list = [
-        "arn:aws:iam::aws:policy/AWSBudgetsActionsWithAWSResourceControlAccess",
-        aws_iam_group.cost_explorer_access_policy.arn,
-        aws_iam_group.enforce_mfa_policy.arn
-    ]
-
-    # Analysts group policy list
-    analysts_policy_list = [
-        "arn:aws:iam::aws:policy/AmazonS3FullAccess",
-        "arn:aws:iam::aws:policy/AmazonRDSReadOnlyAccess",
-        aws_iam_group.enforce_mfa_policy.arn
-    ]
+    # Flatten iam_groups by name and policy arn for attachment 
+    group_policy_attachments = flatten([
+        for group_name, group_config in local.iam_groups: [
+            for policy_arn in group_config: {
+                group = group_name
+                policy_arn = policy_arn
+            }
+        ]
+    ])
 }
 
-# Create Developer User Group
-resource "aws_iam_group" "developers" {
-    name = "Developer"
-    path = "/"
+# Create User Groups
+resource "aws_iam_group" "groups" {
+    for_each = local.iam_groups
+    
+    name = each.key
+    path = each.value.path
 }
 
-# Attaching developers policy list to Developer group
-resource "aws_iam_group_policy_attachment" "attach_developers_policies" {
-    for_each = toset(local.developers_policy_list)
-    group = aws_iam_group.developers.name
-    policy_arn = each.value
-}
+# Attach Policies to Groups
+resource "aws_iam_group_policy_attachment" "attachments" {
+    for_each = local.group_policy_attachments
 
-# Create Operations User Group
-resource "aws_iam_group" "operations" {
-    name = "Operations"
-    path = "/"
-}
-
-# Attaching operations policy list to Operations group
-resource "aws_iam_group_policy_attachment" "attach_operations_policies" {
-    for_each = toset(local.operations_policy_list)
-    group = aws_iam_group.operations.name
-    policy_arn = each.value
-}
-
-# Create Finance User Group
-resource "aws_iam_group" "finance" {
-    name = "Finance"
-    path = "/"
-}
-
-# Attaching finance policy list to Finance group
-resource "aws_iam_group_policy_attachment" "attach_finance_policies" {
-    for_each = toset(local.finance_policy_list)
-    group = aws_iam_group.finance.name
-    policy_arn = each.value
-}
-
-# Create Analysts User Group
-resource "aws_iam_group" "analysts" {
-    name = "Analysts"
-    path = "/"
-}
-
-resource "aws_iam_group_policy_attachment" "attach_analysts_policies" {
-    for_each = toset(local.analysts_policy_list)
-    group = aws_iam_group.analysts.name
+    group = each.key
     policy_arn = each.value
 }
 
