@@ -88,8 +88,8 @@ locals {
     ]
 
 
-    # Operators group policy list
-    operators_policy_list = [
+    # Operations group policy list
+    operations_policy_list = [
         "arn:aws:iam::aws:policy/AmazonEC2FullAccess",
         "arn:aws:iam::aws:policy/AWSSystemsManagerForSAPFullAccess",
         "arn:aws:iam::aws:policy/AmazonRDSFullAccess",
@@ -99,6 +99,7 @@ locals {
     # Finance group policy list
     finance_policy_list = [
         "arn:aws:iam::aws:policy/AWSBudgetsActionsWithAWSResourceControlAccess",
+        aws_iam_group.cost_explorer_access_policy.arn,
         aws_iam_group.enforce_mfa_policy.arn
     ]
 
@@ -117,8 +118,47 @@ resource "aws_iam_group" "developers" {
 }
 
 # Attaching developers policy list to Developer group
-resource "aws_iam_group_policy_attachment" "developers_policies" {
+resource "aws_iam_group_policy_attachment" "attach_developers_policies" {
     for_each = toset(local.developers_policy_list)
     group = aws_iam_group.developers.name
     policy_arn = each.value
 }
+
+# Create Operations User Group
+resource "aws_iam_group" "operations" {
+    name = "Operations"
+    path = "/"
+}
+
+# Attaching operations policy list to Operations group
+resource "aws_iam_group_policy_attachment" "attach_operations_policies" {
+    for_each = toset(local.operations_policy_list)
+    group = aws_iam_group.operations.name
+    policy_arn = each.value
+}
+
+# Create Finance User Group
+resource "aws_iam_group" "finance" {
+    name = "Finance"
+    path = "/"
+}
+
+# Attaching finance policy list to Finance group
+resource "aws_iam_group_policy_attachment" "attach_finance_policies" {
+    for_each = toset(local.finance_policy_list)
+    group = aws_iam_group.finance.name
+    policy_arn = each.value
+}
+
+# Create Analysts User Group
+resource "aws_iam_group" "analysts" {
+    name = "Analysts"
+    path = "/"
+}
+
+resource "aws_iam_group_policy_attachment" "attach_analysts_policies" {
+    for_each = toset(local.analysts_policy_list)
+    group = aws_iam_group.analysts.name
+    policy_arn = each.value
+}
+
