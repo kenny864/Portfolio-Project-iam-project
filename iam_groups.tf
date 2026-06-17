@@ -85,7 +85,7 @@ locals  {
     iam_groups = {
         developers = {
             path = "/teams/"
-            policy_arn = [
+            policy_arns = [
                 "arn:aws:iam::aws:policy/AmazonEC2FullAccess",
                 "arn:aws:iam::aws:policy/AmazonS3FullAccess",
                 aws_iam_policy.enforce_mfa_policy.arn
@@ -93,7 +93,7 @@ locals  {
         }
         operations = {
             path = "/teams/"
-            policy_arn = [
+            policy_arns = [
                 "arn:aws:iam::aws:policy/AmazonEC2FullAccess",
                 "arn:aws:iam::aws:policy/AWSSystemsManagerForSAPFullAccess",
                 "arn:aws:iam::aws:policy/AmazonRDSFullAccess",
@@ -102,7 +102,7 @@ locals  {
         }
         finance = {
             path = "/teams/"
-            policy_arn = [
+            policy_arns = [
                 "arn:aws:iam::aws:policy/AWSBudgetsActionsWithAWSResourceControlAccess",
                 aws_iam_policy.cost_explorer_access_policy.arn,
                 aws_iam_policy.enforce_mfa_policy.arn
@@ -110,7 +110,7 @@ locals  {
         }
         analysts = {
             path = "/teams/"
-            policy_arn = [
+            policy_arns = [
                 "arn:aws:iam::aws:policy/AmazonS3FullAccess",
                 "arn:aws:iam::aws:policy/AmazonRDSReadOnlyAccess",
                 aws_iam_policy.enforce_mfa_policy.arn
@@ -121,9 +121,9 @@ locals  {
     # Flatten iam_groups by name and policy arn for attachment 
     group_policy_attachments = flatten([
         for group_name, group_config in local.iam_groups: [
-            for policy_arn in group_config: {
+            for group_policy_arn in group_config.policy_arns: {
                 group = group_name
-                policy_arn = policy_arn
+                policy_arn = group_policy_arn
             }
         ]
     ])
@@ -139,9 +139,11 @@ resource "aws_iam_group" "groups" {
 
 # Attach Policies to Groups
 resource "aws_iam_group_policy_attachment" "attachments" {
-    for_each = local.group_policy_attachments
+    for_each = tomap({
+        for item in local.group_policy_attachments : "${item.group}-${item.policy_arn}" => item
+    })
 
-    group = each.key
-    policy_arn = each.value
+    group = aws_iam_group.groups[each.value.group].name
+    policy_arn = each.value.policy_arn
 }
 

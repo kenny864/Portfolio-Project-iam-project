@@ -8,7 +8,7 @@ Then I will create several users and assign them to their appropriate user group
 Each User will be required to setup MFA before they gain authorization to anything else.
 
 ## Terraform Launch Order
-terraform plan -target=aws_iam_policy.enforce_mfa_policy
-terraform apply -target=aws_iam_policy.enforce_mfa_policy
+terraform plan -target=aws_iam_policy.enforce_mfa_policy -target=aws_iam_policy.cost_explorer_access_policy
+terraform apply -target=aws_iam_policy.enforce_mfa_policy -target=aws_iam_policy.cost_explorer_access_policy
 terraform plan
 terraform apply
