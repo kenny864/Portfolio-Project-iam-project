@@ -127,6 +127,9 @@ locals  {
             }
         ]
     ])
+
+    # Import user data from users.csv
+    users = csvdecode(file("users.csv"))
 }
 
 # Create User Groups
@@ -147,3 +150,23 @@ resource "aws_iam_group_policy_attachment" "attachments" {
     policy_arn = each.value.policy_arn
 }
 
+# Create Users
+resource "aws_iam_user" "users" {
+    for_each = {
+        for user in local.users: lower("${user.lastname}.${user.firstname}") => user
+    }
+
+    name = each.key
+    path = "/teams/${each.value.department}/"
+}
+
+# Add Users to User Groups
+resource "aws_iam_group_membership" "memberships" {
+    for_each = {
+        for user in local.users: lower("${user.lastname}.${user.firstname}") => user
+    }
+
+    name = "${each.key}-${each.value.department}"
+    users = [aws_iam_user.users[each.key].name]
+    group = aws_iam_group.groups[each.value.department].name
+}
