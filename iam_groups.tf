@@ -170,3 +170,25 @@ resource "aws_iam_group_membership" "memberships" {
     users = [aws_iam_user.users[each.key].name]
     group = aws_iam_group.groups[each.value.department].name
 }
+
+# Generate Passwords for Users
+resource "aws_iam_user_login_profile" "new_users_login" {
+    for_each = {
+        for user in local.users: lower("${user.lastname}.${user.firstname}") => user
+    }
+
+    user = aws_iam_user.users[each.key].name
+    password_length = 20
+    password_reset_required = true
+    pgp_key = file("my_public_key_base64.txt")
+}
+
+output "user_passwords" {
+    value = {
+        for user in aws_iam_user.users:
+            user.name => {
+                encrypted_password = aws_iam_user_login_profile.new_users_login[user.name].encrypted_password
+            }
+
+    }
+}

@@ -7,6 +7,10 @@ I will create several user groups with their individual authorization.
 Then I will create several users and assign them to their appropriate user groups. 
 Each User will be required to setup MFA before they gain authorization to anything else.
 
+## PGP Key
+In iam_groups.tf line 183, replace the pgp_key with the user key.
+In the users.csv, you can an additional column for each user's individual pgp key and return the encrypted password to the user.
+
 ## Terraform Launch Order
 terraform plan -target=aws_iam_policy.enforce_mfa_policy -target=aws_iam_policy.cost_explorer_access_policy
 terraform apply -target=aws_iam_policy.enforce_mfa_policy -target=aws_iam_policy.cost_explorer_access_policy
