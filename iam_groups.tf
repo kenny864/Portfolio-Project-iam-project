@@ -1,104 +1,4 @@
-# Creating IAM Policy to enforce mfa
-resource "aws_iam_policy" "enforce_mfa_policy" {
-    name = "Enforce-MFA-Policy"
-    path = "/"
-    description = "Enforces users to add MFA to their account before accessing any other resources."
-    policy = jsonencode({
-        "Version": "2012-10-17",
-        "Statement": [
-            {
-                "Sid": "AllowViewGlobalPasswordPolicy"
-                "Effect": "Allow",
-                "Action": "iam:GetAccountPasswordPolicy",
-                "Resource": "*"
-            },
-            {
-                "Sid": "AllowViewAccountInfo",
-                "Effect": "Allow",
-                "Action": "iam:ListVirtualMFADevices",
-                "Resource": "*"
-            },
-            {
-                "Sid": "AllowManageOwnVirtualMFADevice",
-                "Effect": "Allow",
-                "Action": [
-                    "iam:CreateVirtualMFADevice"
-                ],
-                "Resource": "arn:aws:iam::*:mfa/*"
-            },
-            {
-                "Sid": "AllowManageOwnUserMFA",
-                "Effect": "Allow",
-                "Action": [
-                    "iam:DeactivateMFADevice",
-                    "iam:EnableMFADevice",
-                    "iam:GetUser",
-                    "iam:GetMFADevice",
-                    "iam:ListMFADevices",
-                    "iam:ResyncMFADevice"
-                ],
-                "Resource": [
-                    "arn:aws:iam::*:user/*/$${aws:username}"
-                ]
-            },
-            {
-                "Sid": "DenyAllExceptListedIfNoMFA",
-                "Effect": "Deny",
-                "NotAction": [
-                    "iam:GetAccountPasswordPolicy",
-                    "iam:ChangePassword",
-                    "iam:CreateVirtualMFADevice",
-                    "iam:EnableMFADevice",
-                    "iam:GetUser",
-                    "iam:ListMFADevices",
-                    "iam:ListVirtualMFADevices",
-                    "iam:ResyncMFADevice",
-                    "sts:GetSessionToken"
-                ],
-                "Resource": "*",
-                "Condition": {
-                    "BoolIfExists": {
-                        "aws:MultiFactorAuthPresent": "false"
-                    }
-                }
-            }
-        ]
-    })
-}
-
-# Creating iam policy to grant cost explorer access
-resource "aws_iam_policy" "cost_explorer_access_policy" {
-    name = "Cost-Explorer-Access-Policy"
-    path = "/"
-    description = "Grants users permissions to view, create, update, and delete using the Cost Explorer reports page."
-    policy = jsonencode({
-        "Version":"2012-10-17",
-        "Statement": [
-            {
-                "Sid": "VisualEditor0",
-                "Effect": "Allow",
-                "Action": [
-                    "aws-portal:ViewBilling",
-                    "ce:CreateReport",
-                    "ce:UpdateReport",
-                    "ce:DeleteReport"
-                ],
-                "Resource": "*"
-            }
-        ]
-    })
-}
-
-resource "aws_iam_account_password_policy" "strict" {
-    minimum_password_length        = 14
-    require_lowercase_characters   = true
-    require_numbers                = true
-    require_uppercase_characters   = true
-    require_symbols                = true
-    allow_users_to_change_password = true
-}
-
-# Define local variables
+# Create local variables for iam_groups
 locals  {
     # Map of IAM groups and their associated managed policy ARNs
     iam_groups = {
@@ -146,9 +46,6 @@ locals  {
             }
         ]
     ])
-
-    # Import user data from users.csv
-    users = csvdecode(file("users.csv"))
 }
 
 # Create User Groups
@@ -167,48 +64,4 @@ resource "aws_iam_group_policy_attachment" "attachments" {
 
     group = aws_iam_group.groups[each.value.group].name
     policy_arn = each.value.policy_arn
-}
-
-# Create Users
-resource "aws_iam_user" "users" {
-    for_each = {
-        for user in local.users: lower("${user.lastname}${user.firstname}") => user
-    }
-
-    name = each.key
-    path = "/teams/${each.value.department}/"
-}
-
-# Add Users to User Groups
-resource "aws_iam_group_membership" "memberships" {
-    for_each = {
-        for user in local.users: lower("${user.lastname}${user.firstname}") => user
-    }
-
-    name = "${each.key}-${each.value.department}"
-    users = [aws_iam_user.users[each.key].name]
-    group = aws_iam_group.groups[each.value.department].name
-}
-
-# Generate Passwords for Users
-resource "aws_iam_user_login_profile" "new_users_login" {
-    for_each = {
-        for user in local.users: lower("${user.lastname}${user.firstname}") => user
-    }
-
-    user = aws_iam_user.users[each.key].name
-    password_length = 20
-    password_reset_required = true
-
-    # Replace the pgp_key with the user's pgp_key
-    # In users.csv, you could include the pgp_key of each user and use it here.connection 
-    # For example pgp_key = each.value.pgp_key
-    pgp_key = file("my_public_key_base64.txt")
-}
-
-output "user_passwords" {
-    value = {
-        for user in aws_iam_user.users:
-            user.name => aws_iam_user_login_profile.new_users_login[user.name].encrypted_password
-    }
 }
