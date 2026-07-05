@@ -39,4 +39,12 @@ resource "aws_iam_user_login_profile" "new_users_login" {
     # In users.csv, you could include the pgp_key of each user and use it here.connection 
     # For example pgp_key = each.value.pgp_key
     pgp_key = file("my_public_key_base64.txt")
+
+    lifecycle {
+      ignore_changes = [ 
+        password_length,
+        password_reset_required,
+        pgp_key
+       ]
+    }
 }
