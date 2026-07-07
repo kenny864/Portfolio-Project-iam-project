@@ -29,11 +29,11 @@ This project demonstrates how Terraform can be used to automate identity managem
 ## How it Works
 
 1. Custom IAM policies are created.
-2. Terraform reads user information from a CSV file.
-3. IAM groups are created and assigned to the appropriate policies.
+2. IAM groups are created and assigned to the appropriate policies.
+3. Terraform reads user information from a CSV file.
 4. IAM users are created automatically.
-5. Each user is added to the correct IAM group.
-6. A policy requires users to configure Multi-Factor Authentication before accessing other AWS services.
+5. An encrypted password is generated for each user using a pgp key.
+6. Each user is added to the correct IAM group.
 
 This approach removes repetitive manual work while enforcing consistent security controls.
 
@@ -99,9 +99,6 @@ This project follows several AWS security best practices:
 
 Potential enhancements include:
 - Support for custom IAM roles
-- Password generation and secure delivery
-- AWS IAM Identity Center (AWS SSO) integration
-- Remote Terraform state using Amazon S3 and DynamoDB state locking
 - CI/CD deployment using GitHub Actions
 - Additional validation for CSV input
 - Unit testing with Terraform testing frameworks
