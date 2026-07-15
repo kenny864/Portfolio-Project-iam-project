@@ -38,11 +38,11 @@ This project demonstrates how Terraform can be used to automate identity managem
 This approach removes repetitive manual work while enforcing consistent security controls.
 
 ## Example CSV
-firstname,lastname,department
-alice,snow,developers
-bob,martin,analysts
-charlie,johnson,finance
-david,davidson,operations
+first_name,last_name,username,email,department,job_title,iam_group
+alice,snow,alice.snow,alice.snow@email.com,Engineer,Cloud Engineer,developers
+bob,martin,bob.martin,bob.martin@email.com,Data & Analytics,Data Analysts,analysts
+charlie,johnson,charlie.johnson,charlie.johnson@email.com,Finance,Financial Analysts,finance
+david,davidson,david.davidson,david.davidson@email.com,IT,Cloud Adminstrator,operations
 
 ## Prerequisites
 - AWS Account

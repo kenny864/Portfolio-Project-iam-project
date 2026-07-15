@@ -103,7 +103,6 @@ locals  {
     # Map of IAM groups and their associated managed policy ARNs
     iam_groups = {
         developers = {
-            path = "/teams/"
             policy_arns = [
                 "arn:aws:iam::aws:policy/AmazonEC2FullAccess",
                 "arn:aws:iam::aws:policy/AmazonS3FullAccess",
@@ -111,7 +110,6 @@ locals  {
             ]
         }
         operations = {
-            path = "/teams/"
             policy_arns = [
                 "arn:aws:iam::aws:policy/AmazonEC2FullAccess",
                 "arn:aws:iam::aws:policy/AWSSystemsManagerForSAPFullAccess",
@@ -120,7 +118,6 @@ locals  {
             ]
         }
         finance = {
-            path = "/teams/"
             policy_arns = [
                 "arn:aws:iam::aws:policy/AWSBudgetsActionsWithAWSResourceControlAccess",
                 aws_iam_policy.cost_explorer_access_policy.arn,
@@ -128,7 +125,6 @@ locals  {
             ]
         }
         analysts = {
-            path = "/teams/"
             policy_arns = [
                 "arn:aws:iam::aws:policy/AmazonS3FullAccess",
                 "arn:aws:iam::aws:policy/AmazonRDSReadOnlyAccess",
@@ -153,7 +149,7 @@ resource "aws_iam_group" "groups" {
     for_each = local.iam_groups
     
     name = each.key
-    path = each.value.path
+    path = "/teams/"
 }
 
 # Attach Policies to Groups
@@ -175,28 +171,38 @@ locals {
 # Create Users
 resource "aws_iam_user" "users" {
     for_each = {
-        for user in local.users: lower("${user.lastname}${user.firstname}") => user
+        for user in local.users: user.username => user
     }
 
     name = each.key
-    path = "/teams/${each.value.department}/"
+    path = "/teams/${each.value.iam_group}/"
+
+    tags = {
+        Name = "${each.value.first_name} ${each.value.last_name}"
+        Email = each.value.email
+        Department = each.value.department
+        JobTitle = each.value.job_title
+        Environment = "production"
+        ManagedBy = "Terraform"
+        Project = "Acme Analytics"
+    }
 }
 
 # Add Users to User Groups
 resource "aws_iam_group_membership" "memberships" {
     for_each = {
-        for user in local.users: lower("${user.lastname}${user.firstname}") => user
+        for user in local.users: user.username => user
     }
 
     name = "${each.key}-${each.value.department}"
     users = [aws_iam_user.users[each.key].name]
-    group = aws_iam_group.groups[each.value.department].name
+    group = aws_iam_group.groups[each.value.iam_group].name
 }
 
 # Generate Passwords for Users
 resource "aws_iam_user_login_profile" "new_users_login" {
     for_each = {
-        for user in local.users: lower("${user.lastname}${user.firstname}") => user
+        for user in local.users: user.username => user
     }
 
     user = aws_iam_user.users[each.key].name
