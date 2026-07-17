@@ -43,6 +43,8 @@ The solution must:
 
 
 ## Project Structure
+
+```text
 .
 ├── main.tf
 ├── outputs.tf
@@ -50,6 +52,7 @@ The solution must:
 ├── state.tf
 ├── users.csv
 └── README.md
+```
 
 ## How it Works
 
