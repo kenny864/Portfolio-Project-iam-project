@@ -1,21 +1,46 @@
-# Portfolio-Project-iam-project
+# Acme 01 Terraform AWS IAM Provisioning
 
 ## Overview
 
-This project uses Terraform to automate AWS IAM user provisioning while enforcing security best practices.
+This project automates AWS Identity and Access Management (IAM) user provisioning for Acme Analytics, a fictional SaaS startup, using Terraform.
 
-Instead of manually creating IAM users, groups, and policies through the AWS Console, this project provisions them as code using Infrastructure as Code (IaC). User accounts are generated from a CSV file, assigned to the appropriate IAM groups, and required to enable Multi-Factor Authentication (MFA) before gaining access to AWS services.
+Instead of manually creating IAM users and assigning permissions through the AWS Management Console, this project provisions users, groups, and security policies as Infrastructure as Code (IaC). User information is read from a CSV file, allowing new employees to be onboarded quickly, consistently, and securely.
 
-This project demonstrates how Terraform can be used to automate identity management in AWS while improving security, consistency, and scalability.
+The project also enforces Multi-Factor Authentication (MFA) by creating an IAM policy that restricts access to AWS services until users configure MFA on their accounts.
+
+As the first project in the Acme Analytics Terraform Portfolio, this repository establishes the company's identity and access management foundation before any networking or application infrastructure is deployed.
+
+## Business Scenario
+
+Acme Analytics has hired its first employees and needs a secure, repeatable process for onboarding new team members into AWS.
+
+Previously, IAM users were created manually, which was time-consuming and increased the risk of configuration errors.
+
+The cloud engineering team has been tasked with automating user provisioning while enforcing AWS security best practices.
+
+The solution must:
+
+- Automatically create IAM users from a CSV file
+- Organize users into role-based IAM groups
+- Assign permissions through IAM groups
+- Require Multi-Factor Authentication before AWS access
+- Eliminate repetitive manual provisioning
+- Support future company growth
 
 ## Features
 
 - Creates multiple IAM user groups
+- Creates encrypted passwords for IAM users
 - Creates IAM policies for each group
 - Automatically provisions IAM users from a CSV file
 - Assigns users to the appropriate IAM group
 - Enforces Multi-Factor Authentication (MFA) for all newly created users
 - Uses Infrastructure as Code (IaC) to provide repeatable deployments
+- Ouptpus users and encrypted password
+
+## AWS Architecture
+
+
 
 ## Project Structure
 .
