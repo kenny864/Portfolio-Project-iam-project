@@ -153,4 +153,10 @@ It's fine if something doesn't work on a small project like this, but a failure 
 
 Kenny Jean-Baptiste
 
+This project is the first milestone in the Acme Analytics Terraform Portfolio, demonstrating how Infrastructure as Code can automate secure identity and access management in AWS. Subsequent projects build on this foundation by introducing networking, compute, storage, CI/CD, containers, serverless applications, monitoring, and Kubernetes.
+
 If you're a recruiter or hiring manager, I'd be happy to discuss this project or my cloud engineering journey.
+
+## License
+
+This project is licensed under the MIT License.
